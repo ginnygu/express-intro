@@ -63,19 +63,26 @@ app.delete("/delete-movie/:imdbID", (req, res) => {
 app.get("/q", (req, res) => {
 	//http://localhost:3000/g?actors=lena
 	console.log(req.query); //{ actors: lena }
+	// http://localhost:3000/q?director=sam => { director: sam }
 	//Hint: Object methods
 	let findMovies;
+	//
 	for (let key in req.query) {
+		// http://localhost:3000/q?director=sam => { director: sam }
+		//key = director
+		//req.query[key] = sam || req.query.director = sam
 		//take first letter and make it capitalized
-		let firstLetter = key[0].toUpperCase();
+		let firstLetter = key[0].toUpperCase(); //D
 		//put them back together and remove the first letter of the original string
-		let newKey = firstLetter + key.slice(1);
+		let newKey = firstLetter + key.slice(1); //D + irector
 
 		findMovies = movies.filter((movie) => {
+			//movie.Director.toLowerCase().includes(sam)
 			return movie[newKey].toLowerCase().includes(req.query[key]);
 		});
-		console.log(findMovies);
+		// console.log(findMovies);
 	}
+
 	res.status(200).json({ movies: findMovies });
 });
 
@@ -132,41 +139,39 @@ app.post("/new-movie", (req, res) => {
 });
 
 // Update = PUT Request/ Patch Request
-
 app.put("/update-movie/:movieID", (req, res) => {
-	const movietoFind = req.params.movieID;
-	console.log(movietoFind);
-
-	const originalMovie = movies.find((movie) => {
-		return movie.imdbID === movietoFind;
-	});
-
-	const movieIndex = movies.findIndex((movie) => {
-		return movie.imdbID === movietoFind;
-	});
-	if (!originalMovie) {
-		return res.status(400).json({
-			success: false,
-			message: "Could not find movie",
-		});
+	//find movie using req.params
+	const imdbID = req.params.movieID;
+	const findIndex = movies.findIndex((film) => film.imdbID === imdbID);
+	if (findIndex === -1) {
+		return res.status(400).json({ success: false, message: "movie not found" });
 	}
-	const updatedMovie = { ...originalMovie };
+
+	//first grab all the current original movie's information
+	const mov = movies[findIndex];
+
+	//need to make a new object
+	const updateMovieInfo = { ...mov };
+	if (req.body.title) {
+		updateMovieInfo.title = req.body.title;
+	}
+
 	for (let key in req.body) {
-		//take first letter and make it capitalized
-		let firstLetter = key[0].toUpperCase();
-		//put them back together and remove the first letter of the original string
-		let newKey = firstLetter + key.slice(1);
+		// key = title, year, rated
 		if (req.body[key]) {
-			updatedMovie[newKey] = req.body[key];
+			let firstLetter = key[0].toUpperCase(); // y, r
+			let newKey = firstLetter + key.slice(1); // Y + ear, R + ated
+			//updateMovieInfo.Year = 1990
+			//updateMovieInfo.Rated = "G"
+			updateMovieInfo[newKey] = req.body[key];
 		}
 	}
 
-	movies[movieIndex] = updatedMovie;
+	//replace back the information
+	movies.splice(findIndex, 1, updateMovieInfo);
 
-	res.json({
-		success: true,
-		updatedMovie: updatedMovie,
-	});
+	console.log(updateMovieInfo);
+	res.status(200).json({ message: "Success" });
 });
 
 app.listen(PORT, () => {
