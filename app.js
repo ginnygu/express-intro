@@ -56,10 +56,24 @@ app.delete("/delete-movie/:imdbID", (req, res) => {
 	res.status(200).json({ data: "movie deleted" });
 });
 
-//req.query
-app.get("/actors", (req, res) => {
-	//http://localhost:3000/actors?n=lena
-	console.log(req.query); //{ n: 'lena' }
+//req.query can make searches more dynamic based on the query name
+app.get("/q", (req, res) => {
+	//http://localhost:3000/g?actors=lena
+	console.log(req.query); //{ actors: lena }
+	//Hint: Object methods
+	let findMovies;
+	for (let key in req.query) {
+		//take first letter and make it capitalized
+		let firstLetter = key[0].toUpperCase();
+		//put them back together and remove the first letter of the original string
+		let newKey = firstLetter + key.slice(1);
+
+		findMovies = movies.filter((movie) => {
+			return movie[newKey].toLowerCase().includes(req.query[key]);
+		});
+		console.log(findMovies);
+	}
+	res.status(200).json({ movies: findMovies });
 });
 
 app.get("/about", (req, res) => {
