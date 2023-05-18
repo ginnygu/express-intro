@@ -3,6 +3,9 @@ const movies = require("./movies");
 
 const app = express();
 const PORT = 3000;
+
+//accept incoming json files
+app.use(express.json());
 //get is a read
 //app.get("url endpoint", callback function with req, res as parameters)
 app.get("/", (req, res) => {
@@ -81,7 +84,90 @@ app.get("/about", (req, res) => {
 });
 
 // Create = POST Request
+//in Postman, remember to click Body=> raw => JSON
+app.post("/new-movie", (req, res) => {
+	const newMovie = {
+		Title: req.body.title,
+		Year: req.body.year,
+		Rated: req.body.rated,
+		Released: req.body.released,
+		Runtime: req.body.runtime,
+		Genre: req.body.genre,
+		Director: req.body.director,
+		Writer: req.body.writer,
+		Actors: req.body.actors,
+		Plot: req.body.plot,
+		Language: req.body.language,
+		Country: req.body.country,
+		Awards: req.body.awards,
+		Poster: req.body.poster,
+		Metascore: req.body.metascore,
+		imdbRating: req.body.imdbRating,
+		imdbVotes: req.body.imdbVotes,
+		imdbID: req.body.imdbID,
+		Type: req.body.type,
+		Response: req.body.response,
+		Images: req.body.images,
+	};
+	console.log(newMovie);
+	let errorArray = [];
+
+	//What are some checks we can do to make sure we're not saving something that is empty or undefined
+	for (let key in newMovie) {
+		// console.log(key);
+		// console.log(newMovie);
+		if (newMovie[key] === "" || newMovie[key] === undefined) {
+			errorArray.push(`${key} cannot be empty`);
+		}
+		if (key === "Images" && newMovie.Images.length === 0) {
+			errorArray.push("images array cannot be empty");
+		}
+	}
+	if (errorArray.length > 0) {
+		return res.status(500).json({ error: true, message: errorArray });
+	} else {
+		movies.push(newMovie);
+	}
+	res.status(200).json({ message: "Success" });
+});
+
 // Update = PUT Request/ Patch Request
+
+app.put("/update-movie/:movieID", (req, res) => {
+	const movietoFind = req.params.movieID;
+	console.log(movietoFind);
+
+	const originalMovie = movies.find((movie) => {
+		return movie.imdbID === movietoFind;
+	});
+
+	const movieIndex = movies.findIndex((movie) => {
+		return movie.imdbID === movietoFind;
+	});
+	if (!originalMovie) {
+		return res.status(400).json({
+			success: false,
+			message: "Could not find movie",
+		});
+	}
+	const updatedMovie = { ...originalMovie };
+	for (let key in req.body) {
+		//take first letter and make it capitalized
+		let firstLetter = key[0].toUpperCase();
+		//put them back together and remove the first letter of the original string
+		let newKey = firstLetter + key.slice(1);
+		if (req.body[key]) {
+			updatedMovie[newKey] = req.body[key];
+		}
+	}
+
+	movies[movieIndex] = updatedMovie;
+
+	res.json({
+		success: true,
+		updatedMovie: updatedMovie,
+	});
+});
 
 app.listen(PORT, () => {
 	console.log(`listening to port ${PORT}`);
